@@ -1,0 +1,12 @@
+{
+  "name": "group-savings",
+  "private": true,
+  "workspaces": ["apps/*"],
+  "scripts": {
+    "dev:api": "npm run dev -w apps/api",
+    "dev:web": "npm run dev -w apps/web",
+    "db:up": "docker compose up -d db",
+    "db:down": "docker compose down",
+    "typecheck": "npm run typecheck -w apps/api && npm run build -w apps/web"
+  }
+}

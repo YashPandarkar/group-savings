@@ -1,0 +1,564 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ───────────── Enums ─────────────
+
+enum GroupRole {
+  PRESIDENT
+  VICE_PRESIDENT
+  MEMBER
+}
+
+enum MembershipStatus {
+  ACTIVE
+  LEFT
+  REMOVED
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  CANCELLED
+  EXPIRED
+}
+
+enum ContributionStatus {
+  PENDING
+  PARTIAL
+  PAID
+  WAIVED
+}
+
+enum PaymentPurpose {
+  MONTHLY_DEPOSIT
+  ADDITIONAL_DEPOSIT
+  LOAN_REPAYMENT
+}
+
+enum PaymentMethod {
+  UPI
+  CARD
+  NETBANKING
+  CASH
+  BANK_TRANSFER
+  OTHER
+}
+
+enum PaymentStatus {
+  CREATED
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+  DISPUTED
+}
+
+enum InterestMethod {
+  NONE
+  FLAT
+  REDUCING_BALANCE
+}
+
+enum RepaymentFrequency {
+  WEEKLY
+  MONTHLY
+}
+
+enum LoanStatus {
+  PENDING
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  DISBURSED
+  ACTIVE
+  PARTIALLY_PAID
+  COMPLETED
+  OVERDUE
+}
+
+enum InstallmentStatus {
+  PENDING
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+}
+
+enum WithdrawalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+  CANCELLED
+}
+
+enum LedgerAccountType {
+  ASSET
+  LIABILITY
+  EQUITY
+  INCOME
+  EXPENSE
+}
+
+enum EntryDirection {
+  DEBIT
+  CREDIT
+}
+
+enum TransactionType {
+  OPENING_CONTRIBUTION
+  MONTHLY_DEPOSIT
+  ADDITIONAL_DEPOSIT
+  LOAN_DISBURSEMENT
+  LOAN_REPAYMENT
+  LOAN_INTEREST_PAYMENT
+  GROUP_WITHDRAWAL
+  REFUND
+  ADJUSTMENT
+  REVERSAL
+}
+
+// ───────────── Users & groups ─────────────
+
+model User {
+  id              String    @id @default(uuid())
+  email           String    @unique
+  name            String
+  phone           String?   @unique
+  passwordHash    String
+  emailVerifiedAt DateTime?
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  memberships          GroupMember[]
+  groupsCreated        Group[]              @relation("GroupCreator")
+  invitationsSent      Invitation[]         @relation("InvitationSender")
+  contributions        Contribution[]
+  paymentOrders        PaymentOrder[]
+  paymentsMade         PaymentTransaction[] @relation("PaymentPayer")
+  paymentsRecorded     PaymentTransaction[] @relation("PaymentRecorder")
+  loans                Loan[]               @relation("LoanBorrower")
+  loansApproved        Loan[]               @relation("LoanApprover")
+  loansDisbursed       Loan[]               @relation("LoanDisburser")
+  loanRepayments       LoanRepayment[]
+  ledgerAccounts       LedgerAccount[]
+  journalsCreated      LedgerJournal[]      @relation("JournalCreator")
+  journalsApproved     LedgerJournal[]      @relation("JournalApprover")
+  withdrawalsRequested Withdrawal[]         @relation("WithdrawalRequester")
+  withdrawalsApproved  Withdrawal[]         @relation("WithdrawalApprover")
+  withdrawalsApproved2 Withdrawal[]         @relation("WithdrawalSecondApprover")
+  notifications        Notification[]
+  auditLogs            AuditLog[]
+
+  @@map("users")
+}
+
+model Group {
+  id                       String         @id @default(uuid())
+  name                     String
+  description              String?
+  logoUrl                  String?
+  monthlyContributionPaise BigInt
+  maxMembers               Int
+  contributionDueDay       Int            @default(10)
+  rules                    String?
+  interestMethod           InterestMethod @default(NONE)
+  interestRateBps          Int            @default(0)
+  defaultRepaymentMonths   Int            @default(12)
+  allowPartialRepayment    Boolean        @default(true)
+  allowEarlyRepayment      Boolean        @default(true)
+  requireDualApproval      Boolean        @default(false)
+  // Where members pay. Details only: the app never holds this money.
+  bankAccountHolder        String?
+  bankAccountNumberEnc     String? // encrypted at the application layer
+  bankIfsc                 String?
+  upiId                    String?
+  createdById              String
+  createdBy                User           @relation("GroupCreator", fields: [createdById], references: [id])
+  createdAt                DateTime       @default(now())
+  updatedAt                DateTime       @updatedAt
+
+  members             GroupMember[]
+  invitations         Invitation[]
+  contributions       Contribution[]
+  paymentOrders       PaymentOrder[]
+  paymentTransactions PaymentTransaction[]
+  loans               Loan[]
+  installments        LoanInstallment[]
+  repayments          LoanRepayment[]
+  ledgerAccounts      LedgerAccount[]
+  ledgerJournals      LedgerJournal[]
+  ledgerEntries       LedgerEntry[]
+  withdrawals         Withdrawal[]
+  notifications       Notification[]
+  auditLogs           AuditLog[]
+
+  @@map("groups")
+}
+
+model GroupMember {
+  id       String           @id @default(uuid())
+  groupId  String
+  userId   String
+  role     GroupRole        @default(MEMBER)
+  status   MembershipStatus @default(ACTIVE)
+  joinedAt DateTime         @default(now())
+  leftAt   DateTime?
+
+  group Group @relation(fields: [groupId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@index([groupId, status])
+  @@index([userId])
+  @@map("group_members")
+}
+
+model Invitation {
+  id          String           @id @default(uuid())
+  groupId     String
+  email       String
+  tokenHash   String           @unique
+  status      InvitationStatus @default(PENDING)
+  invitedById String
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  createdAt   DateTime         @default(now())
+
+  group     Group @relation(fields: [groupId], references: [id])
+  invitedBy User  @relation("InvitationSender", fields: [invitedById], references: [id])
+
+  @@index([groupId, status])
+  @@index([email])
+  @@map("invitations")
+}
+
+// ───────────── Contributions & payments ─────────────
+
+model Contribution {
+  id            String             @id @default(uuid())
+  groupId       String
+  userId        String
+  periodYear    Int
+  periodMonth   Int
+  dueDate       DateTime
+  expectedPaise BigInt
+  paidPaise     BigInt             @default(0)
+  status        ContributionStatus @default(PENDING)
+  paidAt        DateTime?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  group    Group                @relation(fields: [groupId], references: [id])
+  user     User                 @relation(fields: [userId], references: [id])
+  orders   PaymentOrder[]
+  payments PaymentTransaction[]
+
+  @@unique([groupId, userId, periodYear, periodMonth])
+  @@index([groupId, periodYear, periodMonth])
+  @@map("contributions")
+}
+
+model PaymentOrder {
+  id             String         @id @default(uuid())
+  groupId        String
+  userId         String
+  purpose        PaymentPurpose
+  amountPaise    BigInt
+  currency       String         @default("INR")
+  status         PaymentStatus  @default(CREATED)
+  provider       String         @default("razorpay")
+  providerOrderId String        @unique
+  idempotencyKey String
+  contributionId String?
+  loanId         String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  group        Group                @relation(fields: [groupId], references: [id])
+  user         User                 @relation(fields: [userId], references: [id])
+  contribution Contribution?        @relation(fields: [contributionId], references: [id])
+  loan         Loan?                @relation(fields: [loanId], references: [id])
+  transactions PaymentTransaction[]
+
+  @@unique([userId, idempotencyKey])
+  @@index([groupId, status])
+  @@map("payment_orders")
+}
+
+// Gateway payments AND manual deposits recorded by an admin.
+model PaymentTransaction {
+  id                String         @id @default(uuid())
+  groupId           String
+  userId            String
+  orderId           String?
+  providerPaymentId String?        @unique
+  purpose           PaymentPurpose
+  amountPaise       BigInt
+  method            PaymentMethod
+  status            PaymentStatus  @default(PENDING)
+  contributionId    String?
+  loanId            String?
+  recordedById      String? // set for manual deposits
+  evidenceNote      String?
+  evidenceUrl       String?
+  rawPayload        Json?
+  paidAt            DateTime?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  group        Group           @relation(fields: [groupId], references: [id])
+  user         User            @relation("PaymentPayer", fields: [userId], references: [id])
+  order        PaymentOrder?   @relation(fields: [orderId], references: [id])
+  contribution Contribution?   @relation(fields: [contributionId], references: [id])
+  loan         Loan?           @relation(fields: [loanId], references: [id])
+  recordedBy   User?           @relation("PaymentRecorder", fields: [recordedById], references: [id])
+  journals     LedgerJournal[]
+  repayments   LoanRepayment[]
+
+  @@index([groupId, createdAt])
+  @@index([userId])
+  @@map("payment_transactions")
+}
+
+// One row per webhook delivery. The unique key makes duplicates harmless.
+model WebhookEvent {
+  id          String    @id @default(uuid())
+  provider    String
+  eventId     String
+  eventType   String
+  payload     Json
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@unique([provider, eventId])
+  @@map("webhook_events")
+}
+
+// ───────────── Loans ─────────────
+
+model Loan {
+  id                  String             @id @default(uuid())
+  groupId             String
+  userId              String
+  principalPaise      BigInt
+  purpose             String
+  installmentCount    Int
+  repaymentFrequency  RepaymentFrequency @default(MONTHLY)
+  // Terms are copied from the group when the member applies, and never silently change.
+  interestMethod      InterestMethod
+  interestRateBps     Int
+  totalRepayablePaise BigInt? // set when the schedule is generated at approval
+  status              LoanStatus         @default(PENDING)
+  requestedAt         DateTime           @default(now())
+  reviewedAt          DateTime?
+  approvedById        String?
+  approvedAt          DateTime?
+  rejectionReason     String?
+  disbursedById       String?
+  disbursedAt         DateTime?
+  disbursementRef     String? // real bank transfer reference
+  firstDueDate        DateTime?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  group         Group                @relation(fields: [groupId], references: [id])
+  user          User                 @relation("LoanBorrower", fields: [userId], references: [id])
+  approvedBy    User?                @relation("LoanApprover", fields: [approvedById], references: [id])
+  disbursedBy   User?                @relation("LoanDisburser", fields: [disbursedById], references: [id])
+  installments  LoanInstallment[]
+  repayments    LoanRepayment[]
+  paymentOrders PaymentOrder[]
+  payments      PaymentTransaction[]
+  journals      LedgerJournal[]
+
+  @@index([groupId, status])
+  @@index([userId])
+  @@map("loans")
+}
+
+model LoanInstallment {
+  id           String            @id @default(uuid())
+  loanId       String
+  groupId      String
+  number       Int
+  dueDate      DateTime
+  principalPaise BigInt
+  interestPaise  BigInt
+  totalDuePaise  BigInt
+  paidPaise      BigInt          @default(0)
+  status       InstallmentStatus @default(PENDING)
+  paidAt       DateTime?
+
+  loan       Loan            @relation(fields: [loanId], references: [id])
+  group      Group           @relation(fields: [groupId], references: [id])
+  repayments LoanRepayment[]
+
+  @@unique([loanId, number])
+  @@index([groupId, dueDate, status])
+  @@map("loan_installments")
+}
+
+// A payment that spans several installments creates one row per installment.
+model LoanRepayment {
+  id                   String   @id @default(uuid())
+  loanId               String
+  groupId              String
+  userId               String
+  installmentId        String?
+  amountPaise          BigInt
+  principalPortionPaise BigInt
+  interestPortionPaise  BigInt
+  paymentTransactionId String?
+  paidAt               DateTime @default(now())
+
+  loan               Loan                @relation(fields: [loanId], references: [id])
+  group              Group               @relation(fields: [groupId], references: [id])
+  user               User                @relation(fields: [userId], references: [id])
+  installment        LoanInstallment?    @relation(fields: [installmentId], references: [id])
+  paymentTransaction PaymentTransaction? @relation(fields: [paymentTransactionId], references: [id])
+
+  @@index([loanId])
+  @@index([groupId, paidAt])
+  @@map("loan_repayments")
+}
+
+// ───────────── Ledger (double-entry, append-only) ─────────────
+
+model LedgerAccount {
+  id        String            @id @default(uuid())
+  groupId   String
+  code      String // BANK_CLEARING, MEMBER_SAVINGS, LOANS_RECEIVABLE, INTEREST_INCOME, GROUP_EQUITY
+  type      LedgerAccountType
+  userId    String? // set for per-member accounts
+  name      String
+  createdAt DateTime          @default(now())
+
+  group   Group         @relation(fields: [groupId], references: [id])
+  user    User?         @relation(fields: [userId], references: [id])
+  entries LedgerEntry[]
+
+  @@index([groupId])
+  @@map("ledger_accounts")
+}
+
+model LedgerJournal {
+  id                   String          @id @default(uuid())
+  groupId              String
+  type                 TransactionType
+  description          String
+  occurredAt           DateTime        @default(now())
+  createdById          String
+  approvedById         String?
+  paymentTransactionId String?
+  loanId               String?
+  withdrawalId         String?
+  reversalOfId         String?         @unique
+  idempotencyKey       String?
+  createdAt            DateTime        @default(now())
+
+  group              Group               @relation(fields: [groupId], references: [id])
+  createdBy          User                @relation("JournalCreator", fields: [createdById], references: [id])
+  approvedBy         User?               @relation("JournalApprover", fields: [approvedById], references: [id])
+  paymentTransaction PaymentTransaction? @relation(fields: [paymentTransactionId], references: [id])
+  loan               Loan?               @relation(fields: [loanId], references: [id])
+  withdrawal         Withdrawal?         @relation(fields: [withdrawalId], references: [id])
+  reversalOf         LedgerJournal?      @relation("Reversal", fields: [reversalOfId], references: [id])
+  reversal           LedgerJournal?      @relation("Reversal")
+  entries            LedgerEntry[]
+
+  @@unique([groupId, idempotencyKey])
+  @@index([groupId, occurredAt])
+  @@map("ledger_journals")
+}
+
+model LedgerEntry {
+  id          String         @id @default(uuid())
+  journalId   String
+  groupId     String
+  accountId   String
+  direction   EntryDirection
+  amountPaise BigInt
+  createdAt   DateTime       @default(now())
+
+  journal LedgerJournal @relation(fields: [journalId], references: [id])
+  group   Group         @relation(fields: [groupId], references: [id])
+  account LedgerAccount @relation(fields: [accountId], references: [id])
+
+  @@index([journalId])
+  @@index([groupId, accountId])
+  @@map("ledger_entries")
+}
+
+// ───────────── Withdrawals, notifications, audit ─────────────
+
+model Withdrawal {
+  id                 String           @id @default(uuid())
+  groupId            String
+  amountPaise        BigInt
+  purpose            String
+  status             WithdrawalStatus @default(PENDING)
+  requestedById      String
+  approvedById       String?
+  approvedAt         DateTime?
+  secondApprovedById String?
+  secondApprovedAt   DateTime?
+  rejectionReason    String?
+  // COMPLETED means a real bank transfer happened and this is its reference.
+  paymentReference   String?
+  completedAt        DateTime?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  group          Group           @relation(fields: [groupId], references: [id])
+  requestedBy    User            @relation("WithdrawalRequester", fields: [requestedById], references: [id])
+  approvedBy     User?           @relation("WithdrawalApprover", fields: [approvedById], references: [id])
+  secondApprover User?           @relation("WithdrawalSecondApprover", fields: [secondApprovedById], references: [id])
+  journals       LedgerJournal[]
+
+  @@index([groupId, status])
+  @@map("withdrawals")
+}
+
+model Notification {
+  id        String    @id @default(uuid())
+  userId    String
+  groupId   String?
+  type      String
+  title     String
+  body      String
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user  User   @relation(fields: [userId], references: [id])
+  group Group? @relation(fields: [groupId], references: [id])
+
+  @@index([userId, readAt])
+  @@map("notifications")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  groupId    String?
+  actorId    String?
+  action     String
+  entityType String
+  entityId   String
+  before     Json?
+  after      Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  group Group? @relation(fields: [groupId], references: [id])
+  actor User?  @relation(fields: [actorId], references: [id])
+
+  @@index([groupId, createdAt])
+  @@index([entityType, entityId])
+  @@map("audit_logs")
+}
