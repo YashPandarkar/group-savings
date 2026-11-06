@@ -10,6 +10,7 @@ export default defineConfig({
       DATABASE_URL:
         "postgresql://groupsavings:change_me_local_only@localhost:5432/groupsavings_test",
       JWT_ACCESS_SECRET: "test-only-secret-test-only-secret-1234",
+      DATA_ENCRYPTION_KEY: "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff",
       WEB_ORIGIN: "http://localhost:5173",
     },
   },

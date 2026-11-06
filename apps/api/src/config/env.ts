@@ -17,6 +17,9 @@ const envSchema = z.object({
     .default("false")
     .transform((v) => v === "true"),
   JWT_ACCESS_SECRET: z.string().min(32, "must be at least 32 characters (openssl rand -hex 32)"),
+  DATA_ENCRYPTION_KEY: z
+    .string()
+    .regex(/^[0-9a-fA-F]{64}$/, "must be exactly 64 hex characters (openssl rand -hex 32)"),
   ACCESS_TOKEN_TTL_MIN: z.coerce.number().int().positive().default(15),
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(30),
 });

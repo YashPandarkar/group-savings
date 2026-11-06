@@ -8,6 +8,8 @@ import { apiLimiter } from "./middleware/rateLimit";
 import { originCheck } from "./middleware/originCheck";
 import { errorHandler, notFound } from "./middleware/errorHandler";
 import authRoutes from "./modules/auth/auth.routes";
+import groupRoutes from "./modules/groups/groups.routes";
+import invitationRoutes from "./modules/groups/invitations.routes";
 
 export function createApp() {
   const app = express();
@@ -41,6 +43,8 @@ export function createApp() {
   });
 
   app.use("/api/auth", authRoutes);
+  app.use("/api/groups", groupRoutes);
+  app.use("/api/invitations", invitationRoutes);
 
   app.use(notFound);
   app.use(errorHandler);
