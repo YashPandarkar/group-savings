@@ -8,6 +8,8 @@ import * as members from "./members.service";
 import * as invitations from "./invitations.service";
 import contributionRoutes from "../contributions/contributions.routes";
 import depositRoutes from "../contributions/deposits.routes";
+import transactionRoutes from "../ledger/transactions.routes";
+import reportRoutes from "../ledger/reports.routes";
 import {
   changeRoleSchema,
   createGroupSchema,
@@ -44,6 +46,8 @@ router.get("/me", requireAuth, async (req, res) => {
 router.use("/:groupId", requireAuth, requireGroupMember);
 router.use("/:groupId/contributions", contributionRoutes);
 router.use("/:groupId/deposits", depositRoutes);
+router.use("/:groupId/transactions", transactionRoutes);
+router.use("/:groupId/reports", reportRoutes);
 
 router.get("/:groupId", requirePermission("group:view"), async (req, res) => {
   const { groupId, role } = req.membership!;

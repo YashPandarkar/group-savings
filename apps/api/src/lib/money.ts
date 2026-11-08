@@ -8,11 +8,18 @@ export function paiseToNumber(value: bigint): number {
   return Number(value);
 }
 
-// "1234.50": for human-readable messages only. Uses integer math, never floats.
+// "₹1234.50": for human-readable messages only. Uses integer math, never floats.
 export function formatRupees(paise: bigint): string {
   const negative = paise < 0n;
   const abs = negative ? -paise : paise;
   const rupees = abs / 100n;
   const rest = String(abs % 100n).padStart(2, "0");
   return `${negative ? "-" : ""}₹${rupees}.${rest}`;
+}
+
+// "1234.50": plain number text for CSV files.
+export function rupeesPlain(paise: bigint): string {
+  const negative = paise < 0n;
+  const abs = negative ? -paise : paise;
+  return `${negative ? "-" : ""}${abs / 100n}.${String(abs % 100n).padStart(2, "0")}`;
 }

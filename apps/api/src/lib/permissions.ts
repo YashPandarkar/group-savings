@@ -6,7 +6,7 @@ import type { GroupRole } from "@prisma/client";
 const MEMBER_PERMS = [
   "group:view",
   "balance:view",
-  "transactions:view_group",
+  "transactions:view_group", // members see their OWN transactions; admins see all (see transactions:view_all)
   "contribution:view_own",
   "deposit:create",
   "loan:apply",
@@ -18,6 +18,7 @@ const MEMBER_PERMS = [
 const VICE_PRESIDENT_EXTRA = [
   "contribution:view_all",
   "member:view_all",
+  "transactions:view_all",
   "deposit:record_manual",
   "loan:review",
   "loan:view_all",
@@ -37,6 +38,7 @@ const PRESIDENT_EXTRA = [
   "invitation:manage",
   "member:change_role",
   "member:remove",
+  "transaction:reverse",
 ] as const;
 
 export type Permission =
