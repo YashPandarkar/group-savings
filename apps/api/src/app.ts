@@ -10,6 +10,7 @@ import { errorHandler, notFound } from "./middleware/errorHandler";
 import authRoutes from "./modules/auth/auth.routes";
 import groupRoutes from "./modules/groups/groups.routes";
 import invitationRoutes from "./modules/groups/invitations.routes";
+import { loansByIdRoutes } from "./modules/loans/loans.routes";
 
 export function createApp() {
   const app = express();
@@ -45,6 +46,7 @@ export function createApp() {
   app.use("/api/auth", authRoutes);
   app.use("/api/groups", groupRoutes);
   app.use("/api/invitations", invitationRoutes);
+  app.use("/api/loans", loansByIdRoutes);
 
   app.use(notFound);
   app.use(errorHandler);

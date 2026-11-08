@@ -10,6 +10,7 @@ import contributionRoutes from "../contributions/contributions.routes";
 import depositRoutes from "../contributions/deposits.routes";
 import transactionRoutes from "../ledger/transactions.routes";
 import reportRoutes from "../ledger/reports.routes";
+import { loanCollectionRoutes, loanItemRoutes } from "../loans/loans.routes";
 import {
   changeRoleSchema,
   createGroupSchema,
@@ -48,6 +49,8 @@ router.use("/:groupId/contributions", contributionRoutes);
 router.use("/:groupId/deposits", depositRoutes);
 router.use("/:groupId/transactions", transactionRoutes);
 router.use("/:groupId/reports", reportRoutes);
+router.use("/:groupId/loans", loanCollectionRoutes);
+router.use("/:groupId/loans/:loanId", loanItemRoutes);
 
 router.get("/:groupId", requirePermission("group:view"), async (req, res) => {
   const { groupId, role } = req.membership!;

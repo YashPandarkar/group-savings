@@ -20,6 +20,7 @@ const VICE_PRESIDENT_EXTRA = [
   "member:view_all",
   "transactions:view_all",
   "deposit:record_manual",
+  "repayment:record_manual",
   "loan:review",
   "loan:view_all",
   "withdrawal:request",
