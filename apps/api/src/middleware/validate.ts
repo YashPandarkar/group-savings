@@ -17,3 +17,19 @@ export const validateBody =
     req.body = result.data; // cleaned values (trimmed, lowercased...)
     next();
   };
+
+// Express 5 makes req.query read-only, so the cleaned result goes in res.locals.query.
+export const validateQuery =
+  (schema: z.ZodType) => (req: Request, res: Response, next: NextFunction) => {
+    const result = schema.safeParse(req.query);
+    if (!result.success) {
+      throw new AppError(
+        400,
+        "VALIDATION_ERROR",
+        "Please check the query parameters.",
+        result.error.issues.map((i) => ({ field: i.path.join("."), message: i.message }))
+      );
+    }
+    res.locals.query = result.data;
+    next();
+  };

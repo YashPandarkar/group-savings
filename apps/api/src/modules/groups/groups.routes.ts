@@ -6,6 +6,8 @@ import { requirePermission } from "../../middleware/requirePermission";
 import * as groups from "./groups.service";
 import * as members from "./members.service";
 import * as invitations from "./invitations.service";
+import contributionRoutes from "../contributions/contributions.routes";
+import depositRoutes from "../contributions/deposits.routes";
 import {
   changeRoleSchema,
   createGroupSchema,
@@ -40,6 +42,8 @@ router.get("/me", requireAuth, async (req, res) => {
 // ───────────── everything below requires: logged in + ACTIVE member of :groupId ─────────────
 
 router.use("/:groupId", requireAuth, requireGroupMember);
+router.use("/:groupId/contributions", contributionRoutes);
+router.use("/:groupId/deposits", depositRoutes);
 
 router.get("/:groupId", requirePermission("group:view"), async (req, res) => {
   const { groupId, role } = req.membership!;

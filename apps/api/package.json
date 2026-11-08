@@ -12,7 +12,8 @@
     "db:deploy": "dotenv -e ../../.env -- prisma migrate deploy",
     "db:studio": "dotenv -e ../../.env -- prisma studio",
     "db:verify": "tsx src/scripts/verify-db.ts",
-    "test": "vitest run"
+    "test": "vitest run",
+    "contributions:generate": "tsx src/scripts/generate-contributions.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
