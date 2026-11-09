@@ -14,7 +14,8 @@
     "db:verify": "tsx src/scripts/verify-db.ts",
     "test": "vitest run",
     "contributions:generate": "tsx src/scripts/generate-contributions.ts",
-    "loans:sync": "tsx src/scripts/sync-loans.ts"
+    "loans:sync": "tsx src/scripts/sync-loans.ts",
+    "payments:reconcile": "tsx src/scripts/reconcile-payments.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

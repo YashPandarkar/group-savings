@@ -12,6 +12,9 @@ export default defineConfig({
       JWT_ACCESS_SECRET: "test-only-secret-test-only-secret-1234",
       DATA_ENCRYPTION_KEY: "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff",
       WEB_ORIGIN: "http://localhost:5173",
+      // Tests ALWAYS use the simulator, even if your .env holds real Razorpay keys.
+      PAYMENT_MODE: "sandbox",
+      PAYMENT_PROVIDER: "simulator",
     },
   },
 });
