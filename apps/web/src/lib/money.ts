@@ -24,3 +24,6 @@ export const rupeesToPaise = (input: string): number | null => parseDecimalToInt
 // 12 -> 1200 basis points (the API's unit for interest rates)
 export const percentToBps = (input: string): number | null => parseDecimalToInt(input, 2);
 export const bpsToPercent = (bps: number): string => (bps / 100).toFixed(2).replace(/\.00$/, "");
+
+// 20050 -> "200.5", for pre-filling an input
+export const paiseToInput = (paise: number): string => (paise / 100).toFixed(2).replace(/\.00$/, "");

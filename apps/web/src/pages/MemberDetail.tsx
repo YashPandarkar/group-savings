@@ -4,6 +4,7 @@ import { useAuth } from "../auth/AuthContext";
 import { Alert, Card, PageHeader, Spinner } from "../components/ui";
 import { Badge } from "../components/Badge";
 import { ContributionTable, type Contribution } from "../components/ContributionTable";
+import MemberLoans from "./MemberLoans";
 import { api, errorMessage } from "../lib/api";
 import { formatDate } from "../lib/format";
 import { isAdmin, ROLE_LABEL, type Role } from "../lib/types";
@@ -62,7 +63,7 @@ export default function MemberDetail() {
       {history.isPending && <Spinner />}
       {history.isError && <Alert kind="error">{errorMessage(history.error)}</Alert>}
       {history.data && <ContributionTable items={history.data.items} />}
-      <p className="mt-6 text-xs text-slate-500">Loan history for this member is added with the Loans pages in Part 3.</p>
+      {admin && <MemberLoans userId={m.userId} />}
     </>
   );
 }

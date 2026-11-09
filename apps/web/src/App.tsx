@@ -14,6 +14,10 @@ import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import ResetPassword from "./pages/auth/ResetPassword";
 import VerifyEmail from "./pages/auth/VerifyEmail";
+import Deposits from "./pages/deposits/Deposits";
+import ApplyLoan from "./pages/loans/ApplyLoan";
+import LoanDetail from "./pages/loans/LoanDetail";
+import Loans from "./pages/loans/Loans";
 import Settings from "./pages/settings/Settings";
 
 export default function App() {
@@ -35,8 +39,10 @@ export default function App() {
               <Route index element={<Dashboard />} />
               <Route path="members" element={<Members />} />
               <Route path="members/:memberId" element={<MemberDetail />} />
-              <Route path="deposits" element={<ComingSoon title="Deposits" />} />
-              <Route path="loans" element={<ComingSoon title="Loans" />} />
+              <Route path="deposits" element={<Deposits />} />
+              <Route path="loans" element={<Loans />} />
+              <Route path="loans/apply" element={<ApplyLoan />} />
+              <Route path="loans/:loanId" element={<LoanDetail />} />
               <Route path="withdrawals" element={<ComingSoon title="Withdrawals" />} />
               <Route path="transactions" element={<ComingSoon title="Transactions" />} />
               <Route path="reports" element={<ComingSoon title="Reports" />} />

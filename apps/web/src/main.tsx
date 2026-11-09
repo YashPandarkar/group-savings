@@ -6,6 +6,7 @@ import "./index.css";
 import App from "./App";
 import { AuthProvider } from "./auth/AuthContext";
 import { ConfirmProvider } from "./components/Confirm";
+import { PaymentProvider } from "./components/PaymentFlow";
 import { ToastProvider } from "./components/Toast";
 import { ApiError } from "./lib/api";
 
@@ -25,9 +26,11 @@ createRoot(document.getElementById("root")!).render(
       <BrowserRouter>
         <ToastProvider>
           <ConfirmProvider>
-            <AuthProvider>
-              <App />
-            </AuthProvider>
+            <PaymentProvider>
+              <AuthProvider>
+                <App />
+              </AuthProvider>
+            </PaymentProvider>
           </ConfirmProvider>
         </ToastProvider>
       </BrowserRouter>
