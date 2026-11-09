@@ -112,3 +112,33 @@ export async function api<T>(path: string, opts: Options = {}): Promise<T> {
 
 export const errorMessage = (e: unknown): string =>
   e instanceof Error ? e.message : "Something went wrong. Please try again.";
+
+// Downloads a file (e.g. a CSV) with the login token attached, then saves it in the browser.
+export async function downloadFile(path: string, fallbackName: string): Promise<void> {
+  const send = () =>
+    fetch(path, {
+      credentials: "include",
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+    });
+  let res = await send();
+  if (res.status === 401) {
+    if (await refreshSession()) {
+      res = await send();
+    } else {
+      onSessionLost?.();
+      throw await parseError(res);
+    }
+  }
+  if (!res.ok) throw await parseError(res);
+
+  const blob = await res.blob();
+  const name = /filename="([^"]+)"/.exec(res.headers.get("content-disposition") ?? "")?.[1] ?? fallbackName;
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}

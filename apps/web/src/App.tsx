@@ -2,7 +2,7 @@ import { Route, Routes } from "react-router-dom";
 import Layout from "./components/Layout";
 import TestModeBanner from "./components/TestModeBanner";
 import { RequireAuth, RequireGroup } from "./components/guards";
-import { ComingSoon, NotFound } from "./pages/ComingSoon";
+import { NotFound } from "./pages/ComingSoon";
 import Dashboard from "./pages/Dashboard";
 import MemberDetail from "./pages/MemberDetail";
 import Members from "./pages/Members";
@@ -18,7 +18,12 @@ import Deposits from "./pages/deposits/Deposits";
 import ApplyLoan from "./pages/loans/ApplyLoan";
 import LoanDetail from "./pages/loans/LoanDetail";
 import Loans from "./pages/loans/Loans";
+import Reports from "./pages/reports/Reports";
 import Settings from "./pages/settings/Settings";
+import TransactionDetail from "./pages/transactions/TransactionDetail";
+import Transactions from "./pages/transactions/Transactions";
+import WithdrawalDetail from "./pages/withdrawals/WithdrawalDetail";
+import Withdrawals from "./pages/withdrawals/Withdrawals";
 
 export default function App() {
   return (
@@ -43,9 +48,11 @@ export default function App() {
               <Route path="loans" element={<Loans />} />
               <Route path="loans/apply" element={<ApplyLoan />} />
               <Route path="loans/:loanId" element={<LoanDetail />} />
-              <Route path="withdrawals" element={<ComingSoon title="Withdrawals" />} />
-              <Route path="transactions" element={<ComingSoon title="Transactions" />} />
-              <Route path="reports" element={<ComingSoon title="Reports" />} />
+              <Route path="withdrawals" element={<Withdrawals />} />
+              <Route path="withdrawals/:withdrawalId" element={<WithdrawalDetail />} />
+              <Route path="transactions" element={<Transactions />} />
+              <Route path="transactions/:transactionId" element={<TransactionDetail />} />
+              <Route path="reports" element={<Reports />} />
               <Route path="notifications" element={<Notifications />} />
               <Route path="settings" element={<Settings />} />
             </Route>

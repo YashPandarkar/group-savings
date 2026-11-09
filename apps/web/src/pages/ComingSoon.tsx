@@ -1,14 +1,4 @@
 import { Link } from "react-router-dom";
-import { EmptyState, PageHeader } from "../components/ui";
-
-export function ComingSoon({ title }: { title: string }) {
-  return (
-    <>
-      <PageHeader title={title} />
-      <EmptyState title="This page is built in the next part of Phase 11." />
-    </>
-  );
-}
 
 export function NotFound() {
   return (
