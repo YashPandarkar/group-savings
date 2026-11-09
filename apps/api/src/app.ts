@@ -8,6 +8,8 @@ import { apiLimiter } from "./middleware/rateLimit";
 import { originCheck } from "./middleware/originCheck";
 import { errorHandler, notFound } from "./middleware/errorHandler";
 import authRoutes from "./modules/auth/auth.routes";
+import accountRoutes from "./modules/account/account.routes";
+import notificationRoutes from "./modules/notifications/notifications.routes";
 import groupRoutes from "./modules/groups/groups.routes";
 import invitationRoutes from "./modules/groups/invitations.routes";
 import { loansByIdRoutes } from "./modules/loans/loans.routes";
@@ -54,10 +56,12 @@ export function createApp() {
   });
 
   app.use("/api/auth", authRoutes);
+  app.use("/api/auth", accountRoutes);
   app.use("/api/groups", groupRoutes);
   app.use("/api/invitations", invitationRoutes);
   app.use("/api/loans", loansByIdRoutes);
   app.use("/api/withdrawals", withdrawalsByIdRoutes);
+  app.use("/api/notifications", notificationRoutes);
   app.use("/api/payments", paymentRoutes);
 
   // Fake gateway controls: only exist when the simulator is the provider (env.ts forbids that in production).

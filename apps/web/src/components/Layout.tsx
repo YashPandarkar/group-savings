@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../auth/AuthContext";
+import { api } from "../lib/api";
 import { isAdmin, ROLE_LABEL } from "../lib/types";
 import { Button } from "./ui";
 
@@ -12,6 +14,7 @@ const NAV = [
   { to: "/withdrawals", label: "Withdrawals", end: false, adminOnly: false },
   { to: "/transactions", label: "Transactions", end: false, adminOnly: false },
   { to: "/reports", label: "Reports", end: false, adminOnly: true },
+  { to: "/notifications", label: "Notifications", end: false, adminOnly: false },
   { to: "/settings", label: "Settings", end: false, adminOnly: false },
 ];
 
@@ -21,19 +24,31 @@ export default function Layout() {
   const role = me?.membership?.role;
   const links = NAV.filter((n) => !n.adminOnly || isAdmin(role));
 
+  // Checked once a minute: a simple, cheap way to keep the badge fresh.
+  const unread = useQuery({
+    queryKey: ["notifications-unread"],
+    queryFn: () => api<{ unread: number }>("/api/notifications/unread-count"),
+    refetchInterval: 60_000,
+  });
+  const count = unread.data?.unread ?? 0;
+  const badge = count > 99 ? "99+" : String(count);
+
   return (
     <div className="min-h-screen md:flex">
       <header className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 md:hidden">
         <span className="font-semibold text-slate-900">{me?.membership?.groupName}</span>
-        <button
-          type="button"
-          aria-label="Toggle menu"
-          aria-expanded={open}
-          onClick={() => setOpen((o) => !o)}
-          className="rounded-lg p-2 text-slate-700 ring-1 ring-slate-300"
-        >
-          ☰
-        </button>
+        <div className="flex items-center gap-2">
+          {count > 0 && <span className="rounded-full bg-red-600 px-2 py-0.5 text-xs font-semibold text-white">{badge}</span>}
+          <button
+            type="button"
+            aria-label="Toggle menu"
+            aria-expanded={open}
+            onClick={() => setOpen((o) => !o)}
+            className="rounded-lg p-2 text-slate-700 ring-1 ring-slate-300"
+          >
+            ☰
+          </button>
+        </div>
       </header>
 
       <aside
@@ -52,12 +67,15 @@ export default function Layout() {
               end={n.end}
               onClick={() => setOpen(false)}
               className={({ isActive }) =>
-                `rounded-lg px-3 py-2 text-sm font-medium ${
+                `flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium ${
                   isActive ? "bg-indigo-50 text-indigo-700" : "text-slate-700 hover:bg-slate-100"
                 }`
               }
             >
-              {n.label}
+              <span>{n.label}</span>
+              {n.to === "/notifications" && count > 0 && (
+                <span className="rounded-full bg-red-600 px-2 py-0.5 text-xs font-semibold text-white">{badge}</span>
+              )}
             </NavLink>
           ))}
         </nav>
