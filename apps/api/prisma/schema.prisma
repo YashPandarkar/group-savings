@@ -158,6 +158,9 @@ model User {
   refreshTokens        RefreshToken[]
   emailTokens          EmailToken[]
 
+  withdrawalsAsBeneficiary Withdrawal[] @relation("WithdrawalBeneficiary")
+  withdrawalsCompleted     Withdrawal[] @relation("WithdrawalCompleter")
+
   @@map("users")
 }
 
@@ -500,6 +503,13 @@ model LedgerEntry {
 // ───────────── Withdrawals, notifications, audit ─────────────
 
 model Withdrawal {
+  // Phase 10: whose savings are paid out (null = group expense), who recorded the transfer, and how.
+  beneficiaryId String?
+  method        PaymentMethod?
+  completedById String?
+  beneficiary   User?          @relation("WithdrawalBeneficiary", fields: [beneficiaryId], references: [id])
+  completedBy   User?          @relation("WithdrawalCompleter", fields: [completedById], references: [id])
+
   id                 String           @id @default(uuid())
   groupId            String
   amountPaise        BigInt

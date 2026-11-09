@@ -10,6 +10,7 @@ import { installmentDueDate } from "../../lib/loanDates";
 import { deriveInstallmentStatus, deriveLoanStatus, outstanding, paidSplit } from "../../lib/loanRules";
 import { ensureMemberAccounts } from "../../lib/ledgerAccounts";
 import { getAccountId, groupFundBalance, postJournal } from "../../lib/ledger";
+import { committedFunds } from "../../lib/commitments";
 import type { RequestMeta } from "../auth/auth.service";
 import type { ApplyLoanInput, DisburseInput, LoanListQuery, QuoteQuery } from "./loans.schema";
 
@@ -364,9 +365,7 @@ export async function approveLoan(
 
     // Money already promised to other approved (not yet disbursed) loans isn't available.
     const fund = await groupFundBalance(tx, groupId);
-    const committed =
-      (await tx.loan.aggregate({ _sum: { principalPaise: true }, where: { groupId, status: "APPROVED" } }))._sum
-        .principalPaise ?? 0n;
+    const committed = await committedFunds(tx, groupId);
     const available = fund - committed;
     if (loan.principalPaise > available) {
       throw new AppError(

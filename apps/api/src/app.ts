@@ -11,6 +11,7 @@ import authRoutes from "./modules/auth/auth.routes";
 import groupRoutes from "./modules/groups/groups.routes";
 import invitationRoutes from "./modules/groups/invitations.routes";
 import { loansByIdRoutes } from "./modules/loans/loans.routes";
+import { withdrawalsByIdRoutes } from "./modules/withdrawals/withdrawals.routes";
 import paymentRoutes from "./modules/payments/payments.routes";
 import simulatorRoutes from "./modules/payments/payments.dev.routes";
 import { webhookHandler } from "./modules/payments/webhook";
@@ -56,6 +57,7 @@ export function createApp() {
   app.use("/api/groups", groupRoutes);
   app.use("/api/invitations", invitationRoutes);
   app.use("/api/loans", loansByIdRoutes);
+  app.use("/api/withdrawals", withdrawalsByIdRoutes);
   app.use("/api/payments", paymentRoutes);
 
   // Fake gateway controls: only exist when the simulator is the provider (env.ts forbids that in production).
