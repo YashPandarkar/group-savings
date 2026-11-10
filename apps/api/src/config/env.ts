@@ -32,6 +32,9 @@ const envSchema = z.object({
   RAZORPAY_KEY_ID: optionalText,
   RAZORPAY_KEY_SECRET: optionalText,
   RAZORPAY_WEBHOOK_SECRET: optionalText,
+  // Serve the built web app (apps/web/dist) from this API: one origin, so cookies and CORS just work.
+  SERVE_WEB: z.enum(["true", "false"]).default("false").transform((v) => v === "true"),
+  WEB_DIST: optionalText,
 });
 
 const parsed = envSchema.safeParse(process.env);
