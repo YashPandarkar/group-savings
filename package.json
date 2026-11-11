@@ -13,6 +13,11 @@
     "build": "npm run build -w apps/web && npm run build -w apps/api",
     "start": "npm run start -w apps/api",
     "test": "npm test -w apps/api && npm test -w apps/web",
-    "e2e": "npm run build -w apps/web && npm run e2e:db -w apps/api && npm run e2e -w apps/web"
+    "e2e": "npm run build -w apps/web && npm run e2e:db -w apps/api && npm run e2e -w apps/web",
+    "docker:build": "docker compose -f docker-compose.app.yml --env-file .env.docker build",
+    "docker:up": "docker compose -f docker-compose.app.yml --env-file .env.docker up -d --build",
+    "docker:down": "docker compose -f docker-compose.app.yml --env-file .env.docker down",
+    "docker:logs": "docker compose -f docker-compose.app.yml --env-file .env.docker logs -f",
+    "docker:smoke": "bash scripts/docker-smoke.sh"
   }
 }

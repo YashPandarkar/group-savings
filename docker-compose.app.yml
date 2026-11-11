@@ -1,0 +1,79 @@
+# The whole app in containers, for rehearsing a deployment on your own machine.
+# Usage: see the npm run docker:* scripts. Values come from .env.docker (never committed).
+name: groupsavings-app
+
+# Shared by every container that runs the API code.
+x-api-env: &api-env
+  NODE_ENV: ${NODE_ENV:-development}
+  PORT: "4000"
+  DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+  WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:4000}
+  JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?Run scripts/make-env-docker.sh first}
+  DATA_ENCRYPTION_KEY: ${DATA_ENCRYPTION_KEY:?Run scripts/make-env-docker.sh first}
+  PAYMENT_MODE: ${PAYMENT_MODE:-sandbox}
+  PAYMENT_PROVIDER: ${PAYMENT_PROVIDER:-simulator}
+  LEGAL_REVIEW_CONFIRMED: ${LEGAL_REVIEW_CONFIRMED:-false}
+  RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-}
+  RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-}
+  RAZORPAY_WEBHOOK_SECRET: ${RAZORPAY_WEBHOOK_SECRET:-}
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - appdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # No "ports:" on purpose: only the other containers can reach the database.
+
+  # Runs once and exits. The API starts only after it succeeds.
+  migrate:
+    build:
+      context: .
+      target: migrate
+    environment: *api-env
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      target: api
+    environment: *api-env
+    ports:
+      - "${API_HOST_PORT:-4000}:4000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+
+  # Scheduled jobs: contributions, loan statuses, payment reconciliation. Keep to ONE copy.
+  jobs:
+    build:
+      context: .
+      target: api
+    command: ["node", "dist/scripts/jobs.js"]
+    environment: *api-env
+    healthcheck:
+      disable: true
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+
+volumes:
+  appdata:

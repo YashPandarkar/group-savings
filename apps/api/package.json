@@ -17,7 +17,9 @@
     "loans:sync": "tsx src/scripts/sync-loans.ts",
     "payments:reconcile": "tsx src/scripts/reconcile-payments.ts",
     "test:db": "tsx src/scripts/reset-db.ts test",
-    "e2e:db": "tsx src/scripts/reset-db.ts e2e"
+    "e2e:db": "tsx src/scripts/reset-db.ts e2e",
+    "jobs": "tsx src/scripts/jobs.ts",
+    "db:seed": "tsx src/scripts/seed-demo.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

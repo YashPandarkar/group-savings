@@ -97,3 +97,11 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm audit --omit=dev --audit-level=high
+
+  docker:
+    name: Docker images build and start
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash scripts/make-env-docker.sh
+      - run: bash scripts/docker-smoke.sh
