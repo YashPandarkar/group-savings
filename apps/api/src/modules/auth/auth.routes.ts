@@ -2,7 +2,7 @@ import { Router, type CookieOptions, type Request, type Response } from "express
 import { env } from "../../config/env";
 import { validateBody } from "../../middleware/validate";
 import { requireAuth } from "../../middleware/requireAuth";
-import { authLimiter, loginLimiter } from "../../middleware/rateLimit";
+import { authLimiter, loginEmailLimiter, loginLimiter } from "../../middleware/rateLimit";
 import * as service from "./auth.service";
 import {
   emailOnlySchema,
@@ -54,7 +54,7 @@ router.post("/resend-verification", authLimiter, validateBody(emailOnlySchema), 
   res.status(202).json({ message: "If that account needs verification, we've sent a new link." });
 });
 
-router.post("/login", loginLimiter, validateBody(loginSchema), async (req, res) => {
+router.post("/login", loginLimiter, loginEmailLimiter, validateBody(loginSchema), async (req, res) => {
   const { email, password } = req.body as LoginInput;
   const result = await service.login(email, password, meta(req));
   setRefreshCookie(res, result.refreshToken);

@@ -7,6 +7,7 @@ import { lockGroup } from "../../lib/locks";
 import { formatRupees, paiseToNumber } from "../../lib/money";
 import { groupFundBalance, postJournal } from "../../lib/ledger";
 import { memberSavingsBalance } from "../../lib/ledgerAccounts";
+import { committedFunds, outstandingLoanPrincipal, reservedWithdrawals } from "../../lib/commitments";
 import type { RequestMeta } from "../auth/auth.service";
 
 // Loan and withdrawal journals have their own state machines (Phases 8 and 10),
@@ -50,14 +51,17 @@ export async function reverseTransaction(
 
       // The money must still be there to take back.
       const fund = await groupFundBalance(tx, groupId);
-      if (fund < amount) {
+      const promised = await committedFunds(tx, groupId); // approved loans and approved withdrawals
+      if (fund - promised < amount) {
         throw conflict(
           "INSUFFICIENT_FUND",
           `The group fund (${formatRupees(fund)}) can't cover reversing ${formatRupees(amount)}.`
         );
       }
       const savings = await memberSavingsBalance(tx, groupId, payment.userId);
-      if (savings < amount) {
+      const owed = await outstandingLoanPrincipal(tx, groupId, payment.userId);
+      const reservedForMember = await reservedWithdrawals(tx, groupId, payment.userId);
+      if (savings - owed - reservedForMember < amount) {
         throw conflict(
           "MEMBER_BALANCE_TOO_LOW",
           "This member's savings balance is lower than the deposit, so it can't be reversed."

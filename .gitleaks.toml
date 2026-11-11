@@ -1,0 +1,8 @@
+title = "group-savings"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "The public, test-only encryption key used by tests and CI. Production refuses it (see env.ts)."
+regexes = ['''00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff''']

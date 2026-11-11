@@ -79,8 +79,18 @@ if (env.E2E_MAIL_FILE && env.NODE_ENV === "production") {
   problems.push("E2E_MAIL_FILE must never be set when NODE_ENV=production.");
 }
 
+// PRODUCTION_GUARDS: refuse to start with settings that are only fine on a laptop.
+if (env.NODE_ENV === "production") {
+  if (!env.WEB_ORIGIN.startsWith("https://")) problems.push("In production WEB_ORIGIN must be an https:// address.");
+  if (env.DATABASE_URL.includes("change_me")) problems.push("DATABASE_URL still contains the placeholder local password.");
+  if (/^(test-only|ci-only|e2e-only|replace)/i.test(env.JWT_ACCESS_SECRET)) problems.push("JWT_ACCESS_SECRET is a test or placeholder value.");
+  if (env.DATA_ENCRYPTION_KEY === "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff") {
+    problems.push("DATA_ENCRYPTION_KEY is the public test key. Generate your own: openssl rand -hex 32");
+  }
+}
+
 if (problems.length > 0) {
-  console.error("❌ Unsafe payment configuration:");
+  console.error("❌ Unsafe configuration:");
   for (const p of problems) console.error(`  - ${p}`);
   process.exit(1);
 }
