@@ -81,6 +81,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setMe(await api<Me>("/api/auth/me"));
   }, []);
 
+  // A role can change while a tab is open (e.g. promoted to Vice President). Re-read "who am I" when the
+  // person comes back to the tab, so the screens match what the server already enforces.
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void reload().catch(() => undefined);
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [status, reload]);
+
   const value = useMemo(() => ({ status, me, login, logout, reload }), [status, me, login, logout, reload]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

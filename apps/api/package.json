@@ -15,7 +15,9 @@
     "test": "vitest run",
     "contributions:generate": "tsx src/scripts/generate-contributions.ts",
     "loans:sync": "tsx src/scripts/sync-loans.ts",
-    "payments:reconcile": "tsx src/scripts/reconcile-payments.ts"
+    "payments:reconcile": "tsx src/scripts/reconcile-payments.ts",
+    "test:db": "tsx src/scripts/reset-db.ts test",
+    "e2e:db": "tsx src/scripts/reset-db.ts e2e"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

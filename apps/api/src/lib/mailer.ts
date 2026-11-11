@@ -1,11 +1,17 @@
+import fs from "node:fs";
 import { env } from "../config/env";
 
 export type Email = { to: string; subject: string; text: string };
 
-// Used by tests to read "sent" emails.
+// Used by the API tests to read "sent" emails.
 export const outbox: Email[] = [];
 
 export async function sendEmail(email: Email): Promise<void> {
+  // Browser tests read emails from a file (env.ts refuses this setting in production).
+  if (env.E2E_MAIL_FILE) {
+    fs.appendFileSync(env.E2E_MAIL_FILE, JSON.stringify(email) + "\n");
+    return;
+  }
   if (env.NODE_ENV === "test") {
     outbox.push(email);
     return;

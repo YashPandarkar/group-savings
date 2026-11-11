@@ -11,6 +11,8 @@
     "db:down": "docker compose down",
     "typecheck": "npm run typecheck -w apps/api && npm run build -w apps/web",
     "build": "npm run build -w apps/web && npm run build -w apps/api",
-    "start": "npm run start -w apps/api"
+    "start": "npm run start -w apps/api",
+    "test": "npm test -w apps/api && npm test -w apps/web",
+    "e2e": "npm run build -w apps/web && npm run e2e:db -w apps/api && npm run e2e -w apps/web"
   }
 }

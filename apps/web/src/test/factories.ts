@@ -1,0 +1,35 @@
+import type { Loan } from "../lib/loans";
+
+export function makeLoan(over: Partial<Loan> = {}): Loan {
+  return {
+    id: "loan-1",
+    groupId: "g1",
+    borrower: { userId: "u-borrower", name: "Meera" },
+    principalPaise: 100000,
+    purpose: "Shop inventory",
+    installmentCount: 4,
+    repaymentFrequency: "MONTHLY",
+    interestMethod: "FLAT",
+    interestRateBps: 1200,
+    policy: "Flat interest at 12.00% per year on the original amount, repaid in monthly installments.",
+    status: "PENDING",
+    totalRepayablePaise: 104000,
+    totalInterestPaise: 4000,
+    paidPaise: 0,
+    outstandingPaise: null,
+    outstandingPrincipalPaise: null,
+    overdueAmountPaise: 0,
+    nextDue: null,
+    requestedAt: "2026-11-10T10:00:00.000Z",
+    reviewedAt: null,
+    approvedAt: null,
+    approvedBy: null,
+    rejectionReason: null,
+    disbursedAt: null,
+    disbursedBy: null,
+    disbursementRef: null,
+    firstDueDate: null,
+    schedulePreview: null,
+    ...over,
+  };
+}

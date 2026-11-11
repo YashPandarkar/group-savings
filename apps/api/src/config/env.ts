@@ -35,6 +35,8 @@ const envSchema = z.object({
   // Serve the built web app (apps/web/dist) from this API: one origin, so cookies and CORS just work.
   SERVE_WEB: z.enum(["true", "false"]).default("false").transform((v) => v === "true"),
   WEB_DIST: optionalText,
+  // End-to-end tests only: the mailer appends emails to this file. Refused in production.
+  E2E_MAIL_FILE: optionalText,
 });
 
 const parsed = envSchema.safeParse(process.env);
@@ -71,6 +73,10 @@ if (env.PAYMENT_PROVIDER === "razorpay") {
 } else {
   if (env.PAYMENT_MODE === "live") problems.push("The payment simulator can't be used with PAYMENT_MODE=live.");
   if (env.NODE_ENV === "production") problems.push("The payment simulator can't run when NODE_ENV=production.");
+}
+
+if (env.E2E_MAIL_FILE && env.NODE_ENV === "production") {
+  problems.push("E2E_MAIL_FILE must never be set when NODE_ENV=production.");
 }
 
 if (problems.length > 0) {
